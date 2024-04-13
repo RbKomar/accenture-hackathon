@@ -1,0 +1,47 @@
+version: "3.9"
+services:
+  next:
+    domainname: "nierozumiem"
+    image: bartfastap1234.azurecr.io/containergroup:next
+    ports:
+      - "3000:3000"
+    # env_file:
+    #   - ./.env.dev
+    restart: always
+    # depends_on:
+    #   - db
+    networks:
+      - app_network
+
+  fastapi:
+    domainname: "nierozumiem"
+    image: bartfastap1234.azurecr.io/containergroup:fastapi
+    # image: latex/fastapi
+    # volumes:
+    #   - type: bind
+    #     source: ./fastapi
+    #     target: /app/
+    ports:
+      - "8000:8000"
+    # env_file:
+    #   - ./.env.dev
+    restart: always
+    # depends_on:
+    #   - db
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
+
+  # db:
+  #   image: mysql:latest
+  #   restart: always
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: your_password
+  #     MYSQL_DATABASE: Chinook
+  #   ports:
+  #     - "3306:3306"
+  #   networks:
+  #     - app_network
