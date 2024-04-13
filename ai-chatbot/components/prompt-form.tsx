@@ -30,11 +30,11 @@ export function PromptForm({
   const [answearing, setAnswearing] = React.useState(false)
 
   const handleSendMessage = async () => {
-    console.log('send message', input)
+    console.log('send message, fastapi v2', input)
 
     try {
       const response = await axiosInstance
-        .post(`http://127.0.0.1:8000/chat`, {
+        .post(`http://localhost:8000/chat`, {
           message: input
         })
         .then(response => {

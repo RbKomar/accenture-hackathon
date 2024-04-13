@@ -6,3 +6,4 @@ langchainhub
 tavily-python
 langgraph
 mysql-connector-python
+pypyodbc
