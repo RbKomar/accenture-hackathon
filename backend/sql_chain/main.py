@@ -1,7 +1,10 @@
 import sys
 
+from openai import AzureOpenAI
 sys.path.append("../../src/llm/")
 sys.path.append("../../src/milvus_next/")
+
+from langchain_community.utilities.sql_database import SQLDatabase
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
@@ -39,6 +42,7 @@ class Sqlagent():
         self.conn = pyodbc.connect(
             'DRIVER={ODBC Driver 17 for SQL Server};SERVER=<server_name>;DATABASE=hackaton-gr9-sqldb;UID=<username>;PWD=<password>')
 
+    # # ----------- PART 1 (Get query to ask database)
     def vs_search(self, *args, **kwargs):
         print("Received args:", args)
         print("Received kwargs:", kwargs)
@@ -49,6 +53,13 @@ class Sqlagent():
     def schema_chain(self):
         chain = RunnablePassthrough.assign(schema=self.vs_search) | self.prompt | self.llm | StrOutputParser()
         return chain
+    # # ----------- 
+
+    def is_enough(self):
+        pass
+    # # ----------- PART 2 (Get all in one)
+    # def run_query(self, query:str):
+    #     return self.db.run(query)
 
     def run_query(self, query: str):
         cursor = self.conn.cursor()
