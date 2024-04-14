@@ -1,24 +1,16 @@
-import pypyodbc as odbc
 import csv
 
-server = 'tcp:hackaton-gr9-sqlserveri10lm.database.windows.net,1433'
-database ='hackaton-gr9-sqldb'
-username ='hacksqlusr012993'
-password = 'hacksqlusrP@ssw00rd'
+import pypyodbc as odbc
 
-connect_str = 'Driver={ODBC Driver 18 for SQL Server};Server='+server+';Database='+database+';Uid='+username+';Pwd='+password+';Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;'
-
-sql_query = '''SELECT ProductID, Name, ProductNumber, Color, StandardCost, ListPrice, [Size], Weight, ProductCategoryID, ProductModelID, SellStartDate, SellEndDate, DiscontinuedDate
-FROM [hackaton-gr9-sqldb].SalesLT.Product'''
 
 class SQLQuery:
     def __init__(self) -> None:
         self.server = 'tcp:hackaton-gr9-sqlserveri10lm.database.windows.net,1433'
-        self.database ='hackaton-gr9-sqldb'
-        self.username ='hacksqlusr012993'
+        self.database = 'hackaton-gr9-sqldb'
+        self.username = 'hacksqlusr012993'
         self.password = 'hacksqlusrP@ssw00rd'
         self.schema_name = 'SalesLT'
-        self.connect_str = 'Driver={ODBC Driver 18 for SQL Server};Server='+self.server+';Database='+self.database+';Uid='+self.username+';Pwd='+self.password+';Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;'
+        self.connect_str = 'Driver={ODBC Driver 18 for SQL Server};Server=' + self.server + ';Database=' + self.database + ';Uid=' + self.username + ';Pwd=' + self.password + ';Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;'
         self.cursor = self.connect()
 
     def connect(self):
@@ -36,41 +28,44 @@ class SQLQuery:
         schema = self.cursor.fetchall()
         return schema
 
-    def get_table_names(self): 
+    def get_table_names(self):
         sql_query = f"""
         SELECT TABLE_NAME
         FROM INFORMATION_SCHEMA.TABLES
-        WHERE TABLE_SCHEMA = '{ self.schema_name }'
+        WHERE TABLE_SCHEMA = '{self.schema_name}'
         """
         self.cursor.execute(sql_query)
         tables = self.cursor.fetchall()
         return [table[0] for table in tables]
 
-
     def load_csv_data(self, schemas, table_names):
-
         with open('data/products.csv', 'w', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
             # Write the header
-            writer.writerow(["desc","schema","table_name",'access'])
+            writer.writerow(["desc", "schema", "table_name", 'access'])
             # Write the rows
-
-            writer.writerows([[1,8,8,8,2,2,2],[2],[3],[4],[5]])
-
+            for table_name, schema in zip(table_names, schemas):
+                row = [f"Schema for table {table_name}", schema, table_name, "read-only"]
+                writer.writerow(row)
 
     def main(self):
         tables = self.get_table_names()
+        schemas = []
         for table in tables:
             schema = self.get_schema(table)
-            # self.load_csv_data(schema, table)
+            schemas.append(schema)
+        self.load_csv_data(schemas, tables)
 
-    # def test_query(self,sql_query):
-    #     test = self.cursor.execute(sql_query)
-    #     print("coś po query: ",test)
-    #     return self.cursor.fetchall() 
+    def test_query(self, sql_query):
+        self.cursor.execute(sql_query)
+        return self.cursor.fetchall()
 
 
 if __name__ == '__main__':
     sqler = SQLQuery()
-    # print(sqler.test_query(sql_query))
-    sqler.load_csv_data()
+    sql_query = '''
+    SELECT ProductID, Name, ProductNumber, Color, StandardCost, ListPrice, [Size], Weight, ProductCategoryID, ProductModelID, SellStartDate, SellEndDate, DiscontinuedDate
+    FROM [hackaton-gr9-sqldb].SalesLT.Product
+    '''
+    print(sqler.test_query(sql_query))
+    sqler.main()

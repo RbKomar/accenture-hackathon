@@ -1,51 +1,46 @@
-# Use the official Python image as a base
-# FROM python:3.9-slim
-FROM python:3.9-bullseye
+# Use an updated version of python:3.10-slim-bullseye which might have the vulnerability fixed
+FROM python:3.10-slim-bullseye AS base
 
-# Set noninteractive mode for apt-get
 ENV DEBIAN_FRONTEND=noninteractive
-
-# Set the working directory in the container
 WORKDIR /app
 
-# Avoid prompts from apt by setting noninteractive environment
-ENV DEBIAN_FRONTEND=noninteractive
+RUN useradd -m appuser
 
-# Add Microsoft's GPG key
-RUN curl https://packages.microsoft.com/keys/microsoft.asc | tee /etc/apt/trusted.gpg.d/microsoft.asc
+RUN apt-get update && apt-get -y upgrade && apt-get install -y \
+    curl \
+    gnupg \
+    unixodbc-dev \
+    libgssapi-krb5-2 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Add the Microsoft SQL Server repository
-RUN curl https://packages.microsoft.com/config/debian/11/prod.list | tee /etc/apt/sources.list.d/mssql-release.list
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
+    curl https://packages.microsoft.com/config/debian/10/prod.list > /etc/apt/sources.list.d/mssql-release.list
 
-# Update the package lists
-RUN apt-get update
+RUN apt-get update && ACCEPT_EULA=Y apt-get install -y msodbcsql18 mssql-tools18 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install SQL Server ODBC Driver
-RUN ACCEPT_EULA=Y apt-get install -y msodbcsql18
+ENV PATH="$PATH:/opt/mssql-tools18/bin"
 
-# Optional: Install SQL Server Command Line Tools
-RUN ACCEPT_EULA=Y apt-get install -y mssql-tools18
+USER appuser
+COPY requirements.txt .
 
-# Optional: Install unixODBC development headers
-RUN apt-get install -y unixodbc-dev
+USER root
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# Optional: Install Kerberos library for Debian-slim distributions
-RUN apt-get install -y libgssapi-krb5-2
+USER appuser
+COPY --chown=appuser:appuser . .
 
-# Clean up to keep the image clean and small
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Add SQL tools to the PATH
-RUN echo 'export PATH="$PATH:/opt/mssql-tools18/bin"' >> /root/.bashrc
-
-# Copy the current directory contents into the container at /app
-COPY . .
-
-# Install any dependencies specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# Verify that uvicorn is installed
+RUN which uvicorn || (echo "Uvicorn not found" && exit 1)
 
 # Expose the port that the app runs on
 EXPOSE 8000
+
+# Use a non-root user to run the application
+USER appuser
 
 # Command to run the application
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
