@@ -67,6 +67,8 @@ class sqlAgent():
         return chain
     # # ----------- 
 
+    def is_enough(self):
+        pass
     # # ----------- PART 2 (Get all in one)
     # def run_query(self, query:str):
     #     return self.db.run(query)
